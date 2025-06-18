@@ -4644,10 +4644,6 @@ fieldset:disabled .btn {
   }
 }
 
-.sidenav {
-  background-color: #2d2c2c;
-}
-
 .breadcrumb {
   --mdb-breadcrumb-padding-x: 0;
   --mdb-breadcrumb-padding-y: 0;
@@ -19174,7 +19170,7 @@ body {
 .sidenav {
   --mdb-sidenav-transform: translateX(-100%);
   --mdb-sidenav-zindex: 1035;
-  --mdb-sidenav-background-color: #fff;
+  --mdb-sidenav-background-color: #2d2c2c;
   --mdb-sidenav-width: 240px;
   --mdb-sidenav-height: 100vh;
   --mdb-sidenav-box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
