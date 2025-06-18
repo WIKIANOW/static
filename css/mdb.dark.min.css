@@ -4644,6 +4644,10 @@ fieldset:disabled .btn {
   }
 }
 
+.sidenav {
+  background-color: #2d2c2c;
+}
+
 .breadcrumb {
   --mdb-breadcrumb-padding-x: 0;
   --mdb-breadcrumb-padding-y: 0;
