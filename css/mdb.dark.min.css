@@ -3977,7 +3977,8 @@ fieldset:disabled .btn {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: var(--mdb-navbar-padding-y) var(--mdb-navbar-padding-x)
+  padding: var(--mdb-navbar-padding-y) var(--mdb-navbar-padding-x);
+  background-color: rgba(var(--mdb-dark-rgb), var(--mdb-bg-opacity)) !important;
 }
 
 .navbar>.container,
