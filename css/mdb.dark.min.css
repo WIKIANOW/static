@@ -2026,7 +2026,7 @@ progress {
   --mdb-table-bg: transparent;
   --mdb-table-border-color: var(--mdb-border-color);
   --mdb-table-accent-bg: transparent;
-  --mdb-table-striped-color: var(--mdb-body-color);
+  --mdb-table-striped-color: #fff; /*   var(--mdb-body-color); */
   --mdb-table-striped-bg: rgba(0, 0, 0, 0.02);
   --mdb-table-active-color: var(--mdb-body-color);
   --mdb-table-active-bg: rgba(0, 0, 0, 0.1);
