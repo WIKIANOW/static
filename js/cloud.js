@@ -181,6 +181,7 @@ function renderFiles() {
                         <span class="text-[9px] text-slate-400 uppercase font-bold">${(f.size / 1024 / 1024).toFixed(2)} MB ● ${f.owner_name || 'Guest'}</span>
                     </div>
                     <div class="flex gap-4 px-2 transition-all" onclick="event.stopPropagation()">
+                        <button onclick="event.stopPropagation(); copyShareLink('${view}', '${f.name}')" class="text-indigo-500 hover:text-indigo-600 p-1"><i class="fas fa-share-alt"></i></button>
                         <a href="${view}" download="${f.name}" class="text-emerald-500"><i class="fas fa-download"></i></a>
                         ${(user && (user.role === 'admin' || user.username === f.owner)) ? `<button onclick="delFile('${f.id}')" class="text-rose-400"><i class="fas fa-trash-alt"></i></button>` : ''}
                     </div>
@@ -215,12 +216,33 @@ function renderFiles() {
                         <span class="text-center text-[9px] text-slate-400 font-bold uppercase tracking-tighter">${(f.size / 1024 / 1024).toFixed(2)} MB ● ${f.owner_name || 'Guest'}</span>
                         <div class="absolute inset-0 bg-white dark:bg-slate-900 dark:border-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                         <div class="absolute inset-0 flex justify-center items-center gap-3 opacity-0 group-hover:opacity-100 transition-all z-10" onclick="event.stopPropagation()">
-                        ${(user && (user.role === 'admin' || user.username === f.owner)) ? `<button onclick="delFile('${f.id}')" class="w-7 h-7 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center"><i class="fas fa-trash-alt text-[10px]"></i></button>` : ''}
-                        <a href="${view}" download="${f.name}" class="w-7 h-7 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center"><i class="fas fa-download text-[10px]"></i></a>
+                            <button onclick="copyShareLink('${view}', '${f.name}')" class="w-7 h-7 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-500 rounded-lg flex items-center justify-center hover:scale-110 transition-transform shadow-sm" title="Share"><i class="fas fa-share-alt text-[10px]"></i></button>
+                            ${(user && (user.role === 'admin' || user.username === f.owner)) ? `<button onclick="delFile('${f.id}')" class="w-7 h-7 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center"><i class="fas fa-trash-alt text-[10px]"></i></button>` : ''}
+                            <a href="${view}" download="${f.name}" class="w-7 h-7 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center"><i class="fas fa-download text-[10px]"></i></a>
                         </div>
                     </div>
                 </div>`;
         }).join('');
+    }
+}
+
+async function copyShareLink(url, filename) {
+    const fullLink = window.location.origin + url;
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(fullLink);
+        } else {
+            const textArea = document.createElement("textarea");
+            textArea.value = fullLink;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
+        showAlert('success', `Đã sao chép link: ${filename.substring(0, 15)}...`, 2000);
+    } catch (err) {
+        console.error('Lỗi khi copy:', err);
+        showAlert('error', 'Không thể sao chép liên kết!');
     }
 }
 
