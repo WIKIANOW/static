@@ -166,8 +166,8 @@ function renderFiles() {
             const canControl = (user && (user.role === 'admin' || user.username === f.owner));
             const view = `/download?id=${f.id}&hash=${f.hash}`;
             const privacyIcon = f.is_public === 1 ?
-                '<span class="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded text-[8px] font-bold"><i class="fas fa-globe-asia"></i> PUBLIC</span>' :
-                '<span class="text-orange-500 bg-orange-50 px-2 py-0.5 rounded text-[8px] font-bold"><i class="fas fa-lock"></i> PRIVATE</span>';
+                '<span class="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded text-[8px] font-bold"><i class="fas fa-globe-asia"></i></span>' :
+                '<span class="text-orange-500 bg-orange-50 px-2 py-0.5 rounded text-[8px] font-bold"><i class="fas fa-lock"></i></span>';
             return `
                 <div onclick="handleFileClick('${view}', '${f.type}', '${f.name}')" class="group dark:bg-slate-900 dark:border-slate-800 rounded-2xl border border-slate-100 p-3 flex items-center gap-4 cursor-pointer hover:border-indigo-400 transition-all">
                     ${canControl ? `
@@ -177,7 +177,7 @@ function renderFiles() {
                     ` : '<div class="w-4 ml-1"></div>'}
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center text-slate-400">${iconHtml}</div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-[11px] font-bold truncate dark:text-slate-200 uppercase">${privacyIcon} ${f.name}</p>
+                        <p class="text-[11px] font-bold truncate dark:text-slate-200">${privacyIcon} ${f.name}</p>
                         <span class="text-[9px] text-slate-400 uppercase font-bold">${(f.size / 1024 / 1024).toFixed(2)} MB ● ${f.owner_name || 'Guest'}</span>
                     </div>
                     <div class="flex gap-4 px-2 transition-all" onclick="event.stopPropagation()">
@@ -212,7 +212,7 @@ function renderFiles() {
                     <div class="h-64 bg-slate-50 dark:bg-slate-950 flex items-center justify-center flex-shrink-0">${media}</div>
                     <div class="absolute top-3 right-3">${privacyIcon}</div>
                     <div class="relative group p-4 flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
-                        <p class="text-center text-[9px] font-extrabold truncate dark:text-slate-200 uppercase mb-1">${f.name}</p>
+                        <p class="text-center text-[9px] font-extrabold truncate dark:text-slate-200 mb-1">${f.name}</p>
                         <span class="text-center text-[9px] text-slate-400 font-bold uppercase tracking-tighter">${(f.size / 1024 / 1024).toFixed(2)} MB ● ${f.owner_name || 'Guest'}</span>
                         <div class="absolute inset-0 bg-white dark:bg-slate-900 dark:border-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                         <div class="absolute inset-0 flex justify-center items-center gap-3 opacity-0 group-hover:opacity-100 transition-all z-10" onclick="event.stopPropagation()">
