@@ -182,8 +182,8 @@ function renderFiles() {
                     </div>
                     <div class="flex gap-4 px-2 transition-all" onclick="event.stopPropagation()">
                         <button onclick="event.stopPropagation(); copyShareLink('${view}', '${f.name}')" class="text-indigo-500 hover:text-indigo-600 p-1"><i class="fas fa-share-alt"></i></button>
-                        <a href="${view}" download="${f.name}" class="text-emerald-500"><i class="fas fa-download"></i></a>
-                        ${(user && (user.role === 'admin' || user.username === f.owner)) ? `<button onclick="delFile('${f.id}')" class="text-rose-400"><i class="fas fa-trash-alt"></i></button>` : ''}
+                        <a href="${view}" download="${f.name}" class="text-emerald-500 hover:text-emerald-600 p-1"><i class="fas fa-download"></i></a>
+                        ${(user && (user.role === 'admin' || user.username === f.owner)) ? `<button onclick="delFile('${f.id}')" class="text-rose-500 hover:text-rose-600 p-1"><i class="fas fa-trash-alt"></i></button>` : ''}
                     </div>
                 </div>`;
         }).join('');
@@ -217,8 +217,8 @@ function renderFiles() {
                         <div class="absolute inset-0 bg-white dark:bg-slate-900 dark:border-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                         <div class="absolute inset-0 flex justify-center items-center gap-3 opacity-0 group-hover:opacity-100 transition-all z-10" onclick="event.stopPropagation()">
                             <button onclick="copyShareLink('${view}', '${f.name}')" class="w-7 h-7 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-500 rounded-lg flex items-center justify-center hover:scale-110 transition-transform shadow-sm" title="Share"><i class="fas fa-share-alt text-[10px]"></i></button>
-                            ${(user && (user.role === 'admin' || user.username === f.owner)) ? `<button onclick="delFile('${f.id}')" class="w-7 h-7 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center"><i class="fas fa-trash-alt text-[10px]"></i></button>` : ''}
-                            <a href="${view}" download="${f.name}" class="w-7 h-7 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center"><i class="fas fa-download text-[10px]"></i></a>
+                            <a href="${view}" download="${f.name}" class="w-7 h-7 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-500 rounded-lg flex items-center justify-center hover:scale-110 transition-transform shadow-sm"><i class="fas fa-download text-[10px]"></i></a>
+                            ${(user && (user.role === 'admin' || user.username === f.owner)) ? `<button onclick="delFile('${f.id}')" class="w-7 h-7 bg-rose-50 dark:bg-rose-500/20 text-rose-500 rounded-lg flex items-center justify-center hover:scale-110 transition-transform shadow-sm"><i class="fas fa-trash-alt text-[10px]"></i></button>` : ''}
                         </div>
                     </div>
                 </div>`;
@@ -377,12 +377,10 @@ document.getElementById('btnDeleteBatch').onclick = () => {
         }
     });
 };
-document.addEventListener('DOMContentLoaded', () => {
-    updateViewButtons();
-});
+
+updateViewButtons();
 updateAuthUI();
 loadFiles();
-
 
 /**
 @param {string} type - Loại: 'success' | 'error' | 'info'
