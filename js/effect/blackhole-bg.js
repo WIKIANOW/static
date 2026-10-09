@@ -94,7 +94,7 @@
   }
 
   // --- 2. CẤU HÌNH THÔNG SỐ HIỆU ỨNG ---
-  const CONFIG = {
+  const DEFAULT_CONFIG = {
     textCount: 250,       // Số ký tự / công thức đang bay vào
     sparkCount: 50,      // Số vệt sáng mảnh (tạo cảm giác dòng chảy dày đặc)
     streamSpeed: 1.5,     // Tốc độ dòng chảy
@@ -134,6 +134,8 @@
     backgroundColor: "#030712", // Màu nền vũ trụ
     enableF11Zen: true    // Bật chế độ F11 xem toàn màn hình
   };
+  // Tự động gộp cấu hình từ window.CURVE_CONFIG (nếu có)
+  const CONFIG = Object.assign({}, DEFAULT_CONFIG, window.CURVE_CONFIG || {});
 
   const TAU = Math.PI * 2;
   const ARC_SAMPLES = 512;
@@ -818,7 +820,11 @@
   }
 
   window.CurveGatherBackground = CurveGatherBackground;
-  const init = () => { window.__curveGatherInstance = new CurveGatherBackground(); };
+  const init = () => { 
+    if (!window.__curveGatherInstance) {
+      window.__curveGatherInstance = new CurveGatherBackground(); 
+    }
+  };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
