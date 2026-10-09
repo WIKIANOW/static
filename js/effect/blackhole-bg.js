@@ -210,12 +210,18 @@
         html.zen-mode::-webkit-scrollbar, body.zen-mode::-webkit-scrollbar {
           display: none !important; width: 0 !important; height: 0 !important;
         }
-        body.zen-mode > *:not(#curve-viewport):not(#cg-zen-toast) {
+
+        /* Ẩn toàn bộ giao diện của trang docs */
+        body.zen-mode header,
+        body.zen-mode #layout-body,
+        body.zen-mode #sidebar-expand-btn,
+        body.zen-mode .fixed:not(#curve-viewport):not(#cg-zen-toast) {
           opacity: 0 !important;
           visibility: hidden !important;
           pointer-events: none !important;
-          transition: opacity 0.35s ease, visibility 0.35s ease !important;
+          transition: opacity 0.3s ease, visibility 0.3s ease !important;
         }
+
         #cg-zen-toast {
           position: fixed; top: 2rem; left: 50%;
           transform: translateX(-50%); z-index: 999999;
