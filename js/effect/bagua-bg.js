@@ -332,11 +332,15 @@
     }
   }
 
-  // Tự động chạy khi DOM sẵn sàng
+  // Tự động chạy với cấu hình toàn cục (nếu có)
   window.BaguaBackground = BaguaBackground;
+  function autoInit() {
+    const customConfig = window.BAGUA_CONFIG || {};
+    window.baguaInstance = new BaguaBackground(customConfig);
+  }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new BaguaBackground());
+    document.addEventListener('DOMContentLoaded', autoInit);
   } else {
-    new BaguaBackground();
+    autoInit();
   }
 })(window, document);
