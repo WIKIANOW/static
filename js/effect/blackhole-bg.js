@@ -106,10 +106,8 @@
 
   // --- 3. CẤU HÌNH THÔNG SỐ HIỆU ỨNG ---
   const DEFAULT_CONFIG = {
-    // Tùy chọn đổi ký tự liên tục
     randomizeOnFlight: true,   // true = ký tự biến đổi liên tục khi đang bay
-    randomizeInterval: 8,       // Số frame giữa mỗi lần đổi (càng nhỏ càng nhanh giật, vd: 3-5 = siêu nhanh; 15-20 = chậm rãi)
-    
+    randomizeInterval: 8,       // Số frame giữa mỗi lần đổi (càng nhỏ càng nhanh giật)
     textCount: 250,       // Số ký tự / công thức đang bay vào
     sparkCount: 50,      // Số vệt sáng mảnh (tạo cảm giác dòng chảy dày đặc)
     streamSpeed: 1.5,     // Tốc độ dòng chảy
@@ -400,7 +398,6 @@
         fontSize: Math.floor(10 + Math.random() * 8),
         opacity: Math.random() * 0.8 + 0.2,
         isFormula: pick.isFormula,
-        // Bộ đếm chu kỳ đổi ký tự ngẫu nhiên
         morphFrame: Math.floor(Math.random() * Math.max(1, CONFIG.randomizeInterval))
       };
       return this.setupFlow(p, 0.85, 0.45);
@@ -489,6 +486,7 @@
       this.pcol[i] = r < 0.55 ? 0 : r < 0.85 ? 1 : 2;
     }
 
+    // --- ĐÃ VÁ LỖI CẮT CỤT TẠI HÀM NÀY ---
     burst(p) {
       const pt = this.arcAt(p.u);
       this.hit(p.u, 0.22);
@@ -499,4 +497,350 @@
       for (let i = 0; i < n; i++) {
         this.emit(
           pt.x + (Math.random() - 0.5) * halfW * 2,
-          pt.y + (Math.rando
+          pt.y + (Math.random() - 0.5) * p.fontSize,
+          pt.nx, pt.ny, 1
+        );
+      }
+    }
+
+    drawStars() {
+      const ctx = this.ctx;
+      ctx.fillStyle = this.theme.starColor;
+      for (let i = 0; i < this.stars.length; i++) {
+        const s = this.stars[i];
+        ctx.globalAlpha = 0.15 + 0.35 * (0.5 + 0.5 * Math.sin(this.time * s.sp + s.ph));
+        ctx.fillRect(s.x, s.y, s.r, s.r);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    drawTrail(p, t, trailLen, alpha, width, rgb) {
+      const ctx = this.ctx, SEG = 4;
+      const pt = this._c;
+      let x0 = 0, y0 = 0;
+      for (let i = 0; i <= SEG; i++) {
+        const f = i / SEG;
+        this.flowPos(p, Math.max(0, t - trailLen * (1 - f)), pt);
+        if (i > 0) {
+          ctx.strokeStyle = `rgba(${rgb}, ${alpha * f * f})`;
+          ctx.lineWidth = width * (0.3 + 0.7 * f);
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(pt.x, pt.y);
+          ctx.stroke();
+        }
+        x0 = pt.x; y0 = pt.y;
+      }
+    }
+
+    drawTextPath(p, alpha) {
+      const mode = CONFIG.textTrail;
+      if (mode === "none") return;
+      const ctx = this.ctx;
+      const pt = this._a;
+      const tg = this.arcPts[Math.round(p.u * ARC_SAMPLES)];
+      const tEnd = mode === "full" ? 1 : p.t;
+      const e = p.t * (0.65 + 0.35 * p.t);
+      const STEPS = 16;
+
+      ctx.beginPath();
+      for (let i = 0; i <= STEPS; i++) {
+        this.flowPos(p, (tEnd * i) / STEPS, pt);
+        if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+      }
+
+      const a = alpha * CONFIG.textTrailAlpha;
+      const color = this.theme.textPathColor;
+      const grad = ctx.createLinearGradient(tg.x + p.ax * p.L, tg.y + p.ay * p.L, tg.x, tg.y);
+      grad.addColorStop(0, `rgba(${color}, 0)`);
+      grad.addColorStop(Math.min(0.999, Math.max(0.001, e)), `rgba(${color}, ${a})`);
+      if (mode === "full") grad.addColorStop(1, `rgba(${color}, ${a * 0.25})`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = CONFIG.textTrailWidth;
+      ctx.stroke();
+    }
+
+    drawStreams(k) {
+      const ctx = this.ctx;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Vệt sáng mảnh
+      for (let i = 0; i < this.sparks.length; i++) {
+        const s = this.sparks[i];
+        s.t += s.speed * k;
+        if (s.t >= 1) {
+          const pt = this.arcAt(s.u);
+          this.hit(s.u, 0.03);
+          const n = 1 + (Math.random() < 0.5 ? 1 : 0);
+          for (let j = 0; j < n; j++) this.emit(pt.x, pt.y, pt.nx, pt.ny, 0.7);
+          this.sparks[i] = this.spawnSpark();
+          continue;
+        }
+
+        const alpha = Math.min(1, s.t / 0.2) * (0.12 + 0.5 * s.t);
+        this.drawTrail(
+          s, s.t, 0.05 + s.t * 0.09, alpha, s.radius * 0.8,
+          s.cyan ? this.theme.trailCyan : this.theme.trailWhite
+        );
+      }
+
+      // 2. Ký tự & mã nguồn
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      for (let i = 0; i < this.textParticles.length; i++) {
+        const p = this.textParticles[i];
+        p.t += p.speed * k;
+        if (p.t >= 1) {
+          this.burst(p);
+          this.textParticles[i] = this.spawnTextParticle();
+          continue;
+        }
+
+        // Biến đổi ngẫu nhiên ký tự khi bay
+        if (CONFIG.randomizeOnFlight) {
+          p.morphFrame += k;
+          if (p.morphFrame >= CONFIG.randomizeInterval) {
+            p.morphFrame = 0;
+            if (p.type === "glyph") {
+              p.text = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+            } else if (p.type === "equation") {
+              p.text = EQUATIONS[Math.floor(Math.random() * EQUATIONS.length)];
+            } else {
+              p.text = CODE[Math.floor(Math.random() * CODE.length)];
+            }
+          }
+        }
+
+        let alpha = p.opacity;
+        if (p.t < 0.15) alpha *= p.t / 0.15;
+
+        this.drawTextPath(p, alpha);
+        const pos = this._c;
+        this.flowPos(p, p.t, pos);
+
+        const g = p.t > 0.8 ? (p.t - 0.8) / 0.2 : 0;
+        const scale = Math.max(0.4, 1 - p.t * 0.3 - g * 0.35);
+        const size = Math.max(6, Math.round(p.fontSize * scale));
+        const jx = g ? (Math.random() - 0.5) * g * 3 : 0;
+        const jy = g ? (Math.random() - 0.5) * g * 3 : 0;
+
+        ctx.font = `${size}px "JetBrains Mono", "Fira Code", monospace`;
+        if (g > 0) {
+          ctx.fillStyle = this.isDark 
+            ? `rgba(255, 255, 255, ${Math.min(1, alpha * (1 + g * 0.6))})`
+            : `rgba(49, 46, 129, ${Math.min(1, alpha * (1 + g * 0.6))})`;
+        } else {
+          const c = p.isFormula ? this.theme.textFormulaColor : this.theme.textCodeColor;
+          ctx.fillStyle = `rgba(${c}, ${alpha * (p.isFormula ? 0.9 : 0.75)})`;
+        }
+        ctx.fillText(p.text, pos.x + jx, pos.y + jy);
+      }
+    }
+
+    drawArc(k) {
+      const ctx = this.ctx;
+      const closed = this.arcClosed;
+      const S = closed ? 128 : 72;
+      const P = this._d;
+      const decay = Math.pow(0.93, k);
+      for (let i = 0; i < BIN_COUNT; i++) this.heat[i] *= decay;
+
+      const pulse = 1 + 0.06 * Math.sin(this.time * 2.2);
+      const mid = closed ? this.arcCenter : this.arcAt(0.5);
+
+      let avgHeat = 0;
+      for (let i = 0; i < BIN_COUNT; i++) avgHeat += this.heat[i];
+      avgHeat /= BIN_COUNT;
+      const glowR = this.height * 0.5;
+      const grad = ctx.createRadialGradient(mid.x, mid.y, 0, mid.x, mid.y, glowR);
+      grad.addColorStop(0, `rgba(${this.theme.haloColor}, ${0.09 + avgHeat * 0.25})`);
+      grad.addColorStop(1, `rgba(${this.theme.haloColor}, 0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(mid.x - glowR, mid.y - glowR, glowR * 2, glowR * 2);
+
+      const buildShape = (widthScale) => {
+        ctx.beginPath();
+        const outer = [], inner = [];
+        for (let j = 0; j <= S; j++) {
+          const u = j / S;
+          const pt = this.arcLerp(u, P);
+          const endW = closed ? 0.4 : 0;
+          const shape = endW + (1 - endW) * Math.pow(Math.sin(Math.PI * u), 0.85);
+          const wob = Math.sin(u * (closed ? TAU * 2 : 9) + this.time * 1.8) * 1.6 * shape;
+          const w = (CONFIG.arcWidth * shape * (1 + 1.6 * this.heatAt(u)) + 0.4) * pulse * widthScale;
+          outer.push(pt.x + pt.nx * (wob + w * 0.55), pt.y + pt.ny * (wob + w * 0.55));
+          inner.push(pt.x + pt.nx * (wob - w * 0.45), pt.y + pt.ny * (wob - w * 0.45));
+        }
+        ctx.moveTo(outer[0], outer[1]);
+        for (let j = 2; j < outer.length; j += 2) ctx.lineTo(outer[j], outer[j + 1]);
+        for (let j = inner.length - 2; j >= 0; j -= 2) ctx.lineTo(inner[j], inner[j + 1]);
+        ctx.closePath();
+      };
+
+      ctx.save();
+
+      buildShape(1);
+      ctx.shadowColor = this.theme.arcOuterGlow;
+      ctx.shadowBlur = 24;
+      ctx.fillStyle = this.theme.arcOuterFill;
+      ctx.fill();
+
+      buildShape(0.4);
+      ctx.shadowColor = this.theme.arcCoreGlow;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = this.theme.arcCoreFill;
+      ctx.fill();
+
+      ctx.shadowBlur = 6;
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = this.theme.arcWisps;
+      const wisps = closed
+        ? [{ off: 18, a: 0, b: 1 }, { off: -14, a: 0, b: 1 }]
+        : [{ off: 18, a: 0.14, b: 0.86 }, { off: -14, a: 0.2, b: 0.8 }];
+      const WS = closed ? 128 : 40;
+      for (const wsp of wisps) {
+        ctx.beginPath();
+        for (let j = 0; j <= WS; j++) {
+          const u = wsp.a + (wsp.b - wsp.a) * (j / WS);
+          const pt = this.arcLerp(u, P);
+          const x = pt.x + pt.nx * wsp.off, y = pt.y + pt.ny * wsp.off;
+          if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        if (closed) ctx.closePath();
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    drawParticles(k) {
+      const ctx = this.ctx;
+      const N = CONFIG.maxParticles;
+      const friction = Math.pow(0.968, k);
+      const jit = 0.09 * k;
+      const palette = this.theme.palette;
+
+      ctx.globalCompositeOperation = this.isDark ? "lighter" : "source-over";
+
+      for (let pass = 0; pass < 3; pass++) {
+        ctx.fillStyle = palette[pass];
+        for (let i = 0; i < N; i++) {
+          if (this.plife[i] <= 0) continue;
+
+          if (pass === 0) {
+            this.pvx[i] = this.pvx[i] * friction + (Math.random() - 0.5) * jit;
+            this.pvy[i] = this.pvy[i] * friction + (Math.random() - 0.5) * jit;
+            this.px[i] += this.pvx[i] * k;
+            this.py[i] += this.pvy[i] * k;
+            this.plife[i] -= k;
+            if (this.plife[i] <= 0) continue;
+          }
+          if (this.pcol[i] !== pass) continue;
+
+          const f = this.plife[i] / this.pmax[i];
+          const twinkle = 0.7 + 0.3 * Math.sin(this.plife[i] * 0.5 + i);
+          const size = this.psize[i] * (0.4 + 0.6 * f);
+          ctx.globalAlpha = Math.pow(f, 1.3) * twinkle;
+          ctx.fillRect(this.px[i] - size / 2, this.py[i] - size / 2, size, size);
+        }
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    startLoop() {
+      const render = (ts) => {
+        const dtMs = this.lastTs ? Math.min(64, ts - this.lastTs) : 16.67;
+        this.lastTs = ts;
+        const k = dtMs / 16.67;
+        this.time += 0.016 * k;
+
+        this.ctx.fillStyle = this.theme.backgroundColor;
+        this.ctx.fillRect(0, 0, this.width, this.height);
+
+        this.drawStars();
+        this.drawStreams(k);
+        this.drawArc(k);
+        this.drawParticles(k);
+
+        requestAnimationFrame(render);
+      };
+      requestAnimationFrame(render);
+    }
+
+    showZenToast() {
+      let toast = document.getElementById("cg-zen-toast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "cg-zen-toast";
+        toast.innerText = "✨ Nhấn F11 hoặc ESC để hiển thị lại giao diện";
+        document.body.appendChild(toast);
+      }
+      toast.style.opacity = "1";
+      clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => {
+        if (toast) toast.style.opacity = "0";
+      }, 2500);
+    }
+
+    toggleZenMode() {
+      const isZen = document.body.classList.toggle("zen-mode");
+      document.documentElement.classList.toggle("zen-mode", isZen);
+
+      if (isZen) {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+        this.showZenToast();
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    }
+
+    bindEvents() {
+      window.addEventListener("resize", () => this.handleResize());
+
+      const themeObserver = new MutationObserver(() => {
+        this.updateTheme();
+      });
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
+      if (CONFIG.enableF11Zen) {
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "F11") {
+            e.preventDefault();
+            this.toggleZenMode();
+          } else if (e.key === "Escape" && document.body.classList.contains("zen-mode")) {
+            this.toggleZenMode();
+          }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement && document.body.classList.contains("zen-mode")) {
+            document.body.classList.remove("zen-mode");
+            document.documentElement.classList.remove("zen-mode");
+          }
+        });
+
+        window.addEventListener("dblclick", () => {
+          if (document.body.classList.contains("zen-mode")) {
+            this.toggleZenMode();
+          }
+        });
+      }
+    }
+  }
+
+  window.CurveGatherBackground = CurveGatherBackground;
+  const init = () => { window.__curveGatherInstance = new CurveGatherBackground(); };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})(window, document);
